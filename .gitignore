@@ -1,3 +1,4 @@
-#Ignore all files in folder 'build' and 'lib'
-build/
-lib/
+#Ignore all files in folder 'bin', 'build' and 'lib'
+bin/*
+build/*
+lib/*
