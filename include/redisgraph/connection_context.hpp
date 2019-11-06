@@ -10,13 +10,14 @@
 #ifndef REDIS_CONN_CONTEXT_H
 #define REDIS_CONN_CONTEXT_H
 #include <cstdint>
+#include <string>
 
-namespace redisgraph
-{
-    struct connection_context
-    {
-        uint32_t redis_port;
-        std::string redis_host;   
-    };
-}
+namespace redisgraph {
+struct connection_context {
+  uint32_t redis_port;
+  std::string redis_host;
+  size_t n_threads;
+  size_t pool_size;
+};
+} // namespace redisgraph
 #endif
