@@ -30,5 +30,9 @@ void createGraph() const
         std::cout << "Graph created with success" << std::endl;
     }
 }
+result_set<node> query(const std::string query)
+{
+}
+
 }
 ```
