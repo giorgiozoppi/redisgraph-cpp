@@ -6,10 +6,6 @@ If you're using a Linux machine, there is a Makefile wrapping a CMake project.
 Please, use __make__ to build the system and __make distclean__ to delete the automatically generated files.
 # Basic usage
 ```c++
-class RedisWrapper
-{
-void createGraph() const
-{
     redisgraph::connection_context connection{"127.0.0.1", 6379};
     std::unique_ptr<redisgraph::graph> graph = std::make_unique<redisgraph::graph>("Collegues", connection);
     auto node1 = graph->add_node("Employee", "Liv Horowitz");
@@ -29,10 +25,4 @@ void createGraph() const
     {
         std::cout << "Graph created with success" << std::endl;
     }
-}
-result_set<node> query(const std::string query)
-{
-}
-
-}
 ```
