@@ -1,32 +1,34 @@
+/**
+ * @file   node.hpp
+ * @author Giorgio Zoppi <giorgio@apache.org>
+ * @date   December, 2019
+ * @version 1.0.0
+ * @ingroup redisgraphcpp
+ * @brief A node class that is representing the node in a graph db
+ */
+
 #ifndef GRAPH_NODE_H
 #define GRAPH_NODE_H
-
 #include <string>
 #include <memory>
-#include <boost
-#include <siphash.hpp>
+#include <string.hpp>
 #include <boost/uuid.hpp>
-
 namespace redisgraph
 {
-   
     /**
-    * Class
+    * Node class.
     */
-    template <typename T> class node 
+    template <std::semiregular T> class node 
     {
-
         public:
-        node(const std::string& name, const T& data): name_(name), data_(std::make_unique<T>(_data))
+        node(const std::string& name, const std::string& alias, const T& data): name_(name), alias_(alias), data_(std::make_unique<T>(_data))
         {
-
         }
-        node(node const& other): name_(other.name)
+        node(const node<T>& other): name_(other.name)
         {
             //Do assignment logic
             _data = std::make_unique<T>(other.data_)
         }
-
         node &operator=(node const& other) 
         {
             if(this != &other)
@@ -51,6 +53,7 @@ namespace redisgraph
     }   
     node(node&& that) noexcept
     {
+		this->id = that.id;
         this->name_ = std::move(that.name_);
         this->data_= std::move(that.data_);
     }
@@ -62,6 +65,7 @@ namespace redisgraph
     }
     bool operator==(const node& item)
     {
+		if (item.id())
         return (id_ == item.name_)
     }
         virtual ~node() {}
@@ -74,9 +78,10 @@ namespace redisgraph
             std::copy(u.begin(), u.end(), v.begin());
 
         }
-        uint64_t id;
-        std::string name_;          /* Label of the  node */
-        std::unique_ptr<T> data_;   /* Data contained in the node */
+        uint64_t id_;
+        std::string alias_;
+        std::string label_;          /* Label of the  node */
+        std::unique_ptr<T> data_;    /* Data contained in the node */
     };
 }
 #endif

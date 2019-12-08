@@ -2,26 +2,25 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
 #include "catch.hpp"
+#include <string>
 #include "redisgraph/graph.hpp"
 
 static const size_t NUMBER_THREADS = 4;	
 
-redisgraph::graph create_social_graph()
+redisgraph::graph create_graph(const std::string& graph_name)
 {
     redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
-	redisgraph::graph<std::string> g("Social",ctx);
+	redisgraph::graph<std::string> g(graph_name,ctx);
+	return g;
 }
 TEST_CASE( "Graph should be empty initalized correctly", "[graph]" ) {
-    redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
-	redisgraph::graph g("Social",ctx);
-    REQUIRE( g.name() == "Test" );
+	auto g = create_graph("Social");
+    REQUIRE( g.name() == "Social" );
     REQUIRE( g.num_nodes() == 0 );
 }
 TEST_CASE("Nodes should be created correctly","[graph]")
 {
-    const size_t NUMBER_THREADS = 4;
-    redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
-	redisgraph::graph g("MotoGP",ctx);
+    redisgraph::graph g = create_graph("MotoGP");
     auto src = g.add_node<std::string>(node("Rider","{name: 'Valentino Rossi'}");
     auto dst = g.add_node<std::string>(node("Team","{name: 'Yamaha'}"));
     g.add_edge("rides", src, dst);
@@ -29,8 +28,9 @@ TEST_CASE("Nodes should be created correctly","[graph]")
     dst = g.add_node(node("Team", "{name: Honda}"));
     g.add_edge("rides", src, dst);
     auto saved = g.commit_async();
-    REQUIRE(saved == true)    
+    REQUIRE(saved.get() == true)    
 };
+
 TEST_CASE("Graph api should execute opencypher correctly", "[graph]")
 {
  redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
@@ -43,13 +43,12 @@ TEST_CASE("Graph api should execute opencypher with connecting nodes","[graph]")
 {
     redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
     redisgraph::graph api("social",ctx);  
-    auto firstquery =  api.query("social", "CREATE (:person{name:'simon',age:42})"));
-    auto secondquery = api.query("social", "CREATE (:person{name:'lukas',age:18})"));
+    auto firstquery =  api.query_async("CREATE (:person{name:'simon',age:42})"));
+    auto secondquery = api.query_async("CREATE (:person{name:'lukas',age:18})"));
     secondquery.get();
     firstquery.get();
     // Connect source and destination nodes.
-   auto selection = api.query("social", "MATCH (a:person), (b:person) WHERE (a.name = 'roi' AND b
- CREATE (a)-[:knows]->(b)");
+   auto selection = api.query_async_generator("MATCH (a:person), (b:person) WHERE (a.name = 'roi' AND b CREATE (a)-[:knows]->(b)");
 
     Assert.assertFalse(resultSet.hasNext());
 }

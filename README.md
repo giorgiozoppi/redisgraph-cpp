@@ -5,9 +5,8 @@ This is a simple project layout to start working.
 If you're using a Linux machine, there is a Makefile wrapping a CMake project.
 Please, use __make__ to build the system and __make distclean__ to delete the automatically generated files.
 # Basic usage
+### Create a graph
 ```c++
-void queryData()
-{
     redisgraph::connection_context connection{"127.0.0.1", 6379};
     std::unique_ptr<redisgraph::graph> graph = std::make_unique<redisgraph::graph>("Collegues", connection);
     auto node1 = graph->add_node("First", "Luca Deri, Casablanca");
@@ -21,5 +20,7 @@ void queryData()
     {
         std::cout << "" << std::endl;
     }
-}
 ```
+### Query api
+
+
