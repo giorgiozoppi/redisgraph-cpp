@@ -26,14 +26,10 @@ Please, use __make__ to build the system and __make distclean__ to delete the au
     {
         std::cout << "Graph created with success" << std::endl;
     }
-<<<<<<< .mine
 ```
-### Query api
+### Query api. Executing cypher.
+ redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
+ redisgraph::graph api("social",ctx);  
+ auto results = api.query_async("MATCH (a:person), (b:person) WHERE (a.name = 'roi' AND b CREATE (a)-[:knows]->(b)");
+ use_results(results);
 
-
-=======
-```
-
-
-
->>>>>>> .theirs
