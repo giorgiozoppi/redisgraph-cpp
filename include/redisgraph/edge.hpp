@@ -10,14 +10,17 @@
 #define REDIS_GRAPH_EDGE_H
 #include <cstdint>
 #include <node.hpp>
-#include <boost/algorithms>
+#include <node_hash.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 
 namespace redisgraph {
 	
 /**
  * Class that models an edge between nodes.
  */
-class edge {
+template <class T> class edge {
 public:
   /**
    *  Constructor
@@ -25,8 +28,8 @@ public:
    *  @param source    node source
    *  @param destination node destination
    */
-  edge(const std::string &relation, const redisgraph::node &source,
-       const redisgraph::node &dest) 
+  edge(const std::string &relation, const redisgraph::node<T> &source,
+       const redisgraph::node<T> &dest) 
   {
     relation_ = boost::algorithm::to_upper_copy(relation);
     source_node_ = source.id();
@@ -52,7 +55,7 @@ public:
   uint64_t id() const { return edge_id_; }
 
 private:
-	static uint64_t make_id()
+	uint64_t make_id()
 	{
 		static uint64_t currentId = 0;
 		currentId++;

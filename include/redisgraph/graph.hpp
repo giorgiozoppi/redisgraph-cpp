@@ -9,32 +9,24 @@
 #ifndef REDISGRAPH_CPP_GRAPH_H_
 #define REDISGRAPH_CPP_GRAPH_H_
 #include <string>
-#include <promise>
-#include <concepts>
+#include <future>
+#include <node_hash.hpp>
 #include <optional>
-#include <redisgraph/connection_context.hpp>
-#include <redisgraph/edge.hpp>
-#include <redisgrapg/node.hpp>
+#include <connection_context.hpp>
+#include <edge.hpp>
+#include <node.hpp>
+#include <experimental/coroutine>
 #include <result_view.hpp>
-#include <coroutine>
-#include <bredis/bredis.hpp>
+
 
 namespace redisgraph {
 
-	template <typename T> graph make_graph<T>(const std::string& graph_name, 
-		const std::string& host="127.0.0.1", 
-		const unsigned int& port = 6379, 
-		const unsigned int& concurrency = 4)
-	{
-		connection_context ctx{ host, port, concurrency };
-		graph<T> g(graph_name, ctx);
-		return g;
-	}
+	
 
 	/*
 	* Create a graph interface with nodes that contains data of type T
 	*/
-	template <std::semiregular T> class graph 
+	template <class T> class graph 
 	{
 		public:
 			typedef typename std::unique_ptr<node<T>> unique_node;
@@ -70,7 +62,10 @@ namespace redisgraph {
 			 **/
 			explicit graph(graph&& g)
 			{
-
+				graph_ = std::move(g.graph_);
+				context_ = std::move(g.context_);
+				name_ = std::move(g.name_);
+				num_nodes_ = std::move(g.num_nodes_);
 			}
 			~graph() {}
 
@@ -199,6 +194,15 @@ namespace redisgraph {
 			redisgraph::connection_context context_;
 			std::unique_ptr<std::unordered_map<std::unique_ptr<node>,std::vector<edge>>> graph_;		
 			
+	};
+	template <typename T> graph<T> make_graph(const std::string& graph_name,
+		const std::string& host = "127.0.0.1",
+		const unsigned int& port = 6379,
+		const unsigned int& concurrency = 4)
+	{
+		connection_context ctx{ host, port, concurrency };
+		graph<T> g(graph_name, ctx);
+		return g;
 	};
 }
 #endif /* REDISGRAPH_CPP_GRAPH_H_ */
