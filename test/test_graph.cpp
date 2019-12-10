@@ -22,15 +22,18 @@
 #include <picojson/picojson.h>
 static const size_t NUMBER_THREADS = 4;	
 static const std::string defaultHost("127.0.0.1");
-
+/*
 redisgraph::graph<picojson::value>&& create_graph(const std::string& graph_name)
 {
     redisgraph::connection_context ctx{ defaultHost,6379, NUMBER_THREADS };
-    redisgraph::graph<picojson::value> g(graph_name, ctx);
+   // redisgraph::graph<picojson::value> g(graph_name, ctx);
 	return std::move(g);
 }
+*/
 TEST_CASE( "Graph should be empty initalized correctly", "[graph]" ) {
-//	auto g = create_graph("Social");
+    redisgraph::connection_context ctx{ defaultHost,6379, NUMBER_THREADS };
+
+    //	auto g = create_graph("Social");
   //  REQUIRE( g.name() == "Social" );
   //  REQUIRE( g.num_nodes() == 0 );
 }
@@ -48,14 +51,5 @@ TEST_CASE("Nodes should be created correctly","[graph]")
     REQUIRE(saved.get() == true)    
 };
 */
-/**
-TEST_CASE("Graph api should execute opencypher correctly", "[graph]")
-{
- redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
- redisgraph::graph api("social",ctx);  
- std::future<redisgraph::resultset> result = api.query_async("social", "CREATE ({name:'simon',age:42})");
- result.get();
- REQUIRE( api.num_nodes() == 1 );
-}
-*/
+
 

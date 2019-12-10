@@ -12,8 +12,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **/
-#ifndef NODE_HASH_H
-#define NODE_HASH_H
+#ifndef REDIS_NODE_HASH_H
+#define REDIS_NODE_HASH_H
 #include <node.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <siphash.hpp>
@@ -35,8 +35,8 @@ template <typename T> struct hash<std::unique_ptr<redisgraph::node<T>>> {
       unsigned char uuid_data[16];
       // fill uuid_data
       boost::uuids::uuid u = c->id();
-      memcpy(uuid_data,&u,16);
-      hash()((void*)uuid_data, 16);
+      memcpy(&uuid_data,&u,16);
+      hash()((void*)&uuid_data, 16);
       return hash.computeHash();
   }
 };
