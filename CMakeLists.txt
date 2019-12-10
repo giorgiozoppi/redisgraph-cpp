@@ -37,7 +37,7 @@ SET (LIBRARY_OUTPUT_PATH "${MAINFOLDER}/lib")
 LIST (APPEND CMAKE_PREFIX_PATH "${MAINFOLDER}")
 INCLUDE_DIRECTORIES("${MAINFOLDER}/include")
 INCLUDE_DIRECTORIES("${MAINFOLDER}/include/redisgraph")
-INCLUDE_DIRECTORIES("${MAINFOLDER}/third-party/cpp-redis/include")
+INCLUDE_DIRECTORIES("${MAINFOLDER}/third-party/cpp-bredis/include")
 #
 # Locate Project Prerequisites
 #

@@ -1,23 +1,32 @@
 /**
- * @file   graph.hpp
- * @author Giorgio Zoppi <giorgio@apache.org>
- * @date   September, 2019
- * @version 1.0.0
- * @ingroup redisgraphcpp
- * @brief A graph class representing the real data contained in redis graph
- */
+* Copyright 2019 RRD Software Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+
 #ifndef REDISGRAPH_CPP_GRAPH_H_
 #define REDISGRAPH_CPP_GRAPH_H_
 #include <string>
 #include <future>
-#include <node_hash.hpp>
+#include <memory>
 #include <optional>
+#include <unordered_map>
+#include <utility>
+#include <thread>
 #include <connection_context.hpp>
 #include <edge.hpp>
-#include <node.hpp>
-#include <experimental/coroutine>
+#include <node.hpp> 
+#include <node_hash.hpp>
 #include <result_view.hpp>
-
 
 namespace redisgraph {
 
@@ -30,6 +39,9 @@ namespace redisgraph {
 	{
 		public:
 			typedef typename std::unique_ptr<node<T>> unique_node;
+			typedef typename std::hash<std::unique_ptr<redisgraph::node<T>>> node_hash;
+			typedef typename std::unordered_map <unique_node, std::vector<edge<T>>, node_hash> adj_matrix;
+			//
 			/*
 			* Constructor
 			*/
@@ -41,33 +53,41 @@ namespace redisgraph {
 			* @param context Redis Configuration
 			*/
 
-			explicit graph(const std:string& name, const redisgraph::connection_context& context): name_(name), connection_context_(context)
+			explicit graph(const std::string& name, const redisgraph::connection_context& context): name_(name), context_(context)
 			{
-				std::unordered_map<unique_node, std::vector<edge>> map;
-				graph_ = std::make_unique(map);
+				adj_matrix map;
+				graph_ = std::make_unique<adj_matrix>(map);
+				started_ = false;
 			} 
 			/**
 			* Copy constructor. The graph is not copyable.
 			* @param graph Graph to be copied.
 			*/
-			graph(const redisgraph::graph& graph) = delete;
+			graph(const redisgraph::graph<T>& graph) = delete;
 			/**
 			* Copy assignment operator. The graph is not copyable
 			* @param Graph to be assigned.
 			*/
-			const redisgraph::graph& operator=(const redisgraph::graph& graph) = delete;
+			const redisgraph::graph<T>& operator=(const redisgraph::graph<T>& graph) = delete;
 			
 			/** 
 			 * Move semantics 
 			 **/
 			explicit graph(graph&& g)
 			{
+				g.shutdown();
 				graph_ = std::move(g.graph_);
 				context_ = std::move(g.context_);
 				name_ = std::move(g.name_);
 				num_nodes_ = std::move(g.num_nodes_);
+				graph_->start();
 			}
-			~graph() {}
+			~graph() {
+				if (started_)
+				{
+				    shutdown();
+				}
+			}
 
 			/// Getter and setter		
 			/**
@@ -83,13 +103,13 @@ namespace redisgraph {
 			 * Add a node and label to the node.
 			 * @return A copy of the added node if added with success.
 			 */
-			std::optional<node> add_node(const std::string& name, T data) noexcept
+			std::optional<node<T>> add_node(const std::string& name, T data) noexcept
 			{
-				node current_node{ name, data };
-				auto node = graph->find(current_node);
+				node<T> current_node{ name, data };
+				auto node = graph_->find(current_node);
 				if (node != node.end())
 				{
-					graph->insert(std::make_pair(std::make_unique<node>(current_node), std::vector()));
+					graph_->insert(std::make_pair(std::make_unique<node>(current_node), std::vector()));
 					return current_node;
 				}
 				return std::nullopt;
@@ -98,14 +118,14 @@ namespace redisgraph {
 			*  Remove a node 
 			*  @return A copy of the removed node
 			*/
-			std::optional<node> remove_node(const std::string& name)
+			std::optional<node<T>> remove_node(const std::string& name)
 			{
 
 			}
 			/**
 			* Add a new edge with a relation from the source node to the destination node
 			*/
-			std::optional<edge> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest) noexcept
+			std::optional<edge<T>> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest) noexcept
 			{
 					// find in the node relation if from source there is a node to destination.
 				auto currentNode = graph_->find(source);
@@ -136,14 +156,14 @@ namespace redisgraph {
 			*/
 			void start()
 			{
-
+				started_ = true;
 			}
 			/**
 			 *  shutdown the connection pool to redis 
 			 */
 			void shutdown()
 			{
-
+				started_ = false;
 			}
 			/**
 			 * Query asynchronously to redis graph
@@ -151,16 +171,10 @@ namespace redisgraph {
 			 */
 			std::future<redisgraph::result_view> query_async(const std::string& query)
 			{
-
+				std::packaged_task<redisgraph::result_view()> task([]() { return result_view(); }); // wrap the function
+				return task.get_future();  // get 
 			}
 
-			/**
-			* Query asynchronously to redis graph returning a generator for iterating partial results
-			*/
-			std::generator<redisgraph::node> query_async_generator(const std::string& query)
-			{
-
-			}
 			/**
 			 * Commit the current graph structure in memory to redis graph creating a graph 
 			 * @throw When there are connection problems
@@ -168,7 +182,8 @@ namespace redisgraph {
 			 */
 			std::future<bool> commit_async()
 			{
-
+				std::packaged_task<bool()> task([]() { return false; }); // wrap the function
+				return task.get_future();  // get 
 			}
 			
 			/**
@@ -176,14 +191,14 @@ namespace redisgraph {
 			*/
 			bool flush()
 			{
-
+				return false;
 			}			
 		private:
 			void init_connection(const redisgraph::connection_context& context)
 			{
 
 			}
-			bool find_direct_connection(const node<T>& source, const node<T>& dest, const egde& e)
+			bool find_direct_connection(const node<T>& source, const node<T>& dest, const edge<T>& e)
 			{
 				auto sourceId = source.id();
 				auto destinationId = dest.id();
@@ -191,8 +206,9 @@ namespace redisgraph {
 			}
 			std::string name_;
 			int num_nodes_;
+			bool started_;
 			redisgraph::connection_context context_;
-			std::unique_ptr<std::unordered_map<std::unique_ptr<node>,std::vector<edge>>> graph_;		
+			std::unique_ptr<adj_matrix> graph_;
 			
 	};
 	template <typename T> graph<T> make_graph(const std::string& graph_name,

@@ -1,11 +1,17 @@
 /**
- * @file   node.hpp
- * @author Giorgio Zoppi <giorgio@apache.org>
- * @date   December, 2019
- * @version 1.0.0
- * @ingroup redisgraphcpp
- * @brief A node class that is representing the node in a graph db
- */
+* Copyright 2019 RRD Software Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
 
 #ifndef GRAPH_NODE_H
 #define GRAPH_NODE_H
@@ -17,56 +23,74 @@
 namespace redisgraph
 {
 	/**
-	* Node class.
+	* Graph node class
 	*/
 	template <typename T> class node
 	{
 	public:
+		/**
+		* Constructor. An unique identifier gets generated.
+		* @param label label of the node
+		* @param  alias alias of the node
+		* @param data value of the node (it might be a JSON or binary data)
+		*/
 		explicit node(const std::string& label, const std::string& alias, const T& data) : label_(label), alias_(alias), data_(std::make_unique<T>(_data))
 		{
+			_id = generate_id();
 		}
+		/**
+		* Copy constructor
+		*/
 		explicit node(const node<T>& other) : label_(other.label_), alias_(other.alias_), id_(other.id_)
 		{
 			//Do assignment logic
 			_data = std::make_unique<T>(other.data_)
 		}
+		/**
+		* Copy assignment constructor
+		*/
 		node& operator=(node const& other)
 		{
 			if (this != &other)
 			{
-				this.label_ = other.label_;
-				this.alias_ = other.alias_;
+				this->label_ = other.label_;
+				this->alias_ = other.alias_;
 				this->id_ = other.id_;
-				this.data_ = std::make_unique<T>(other.data_);
+				this->data_ = std::make_unique<T>(other.data_);
 			}
 			// Use copy and swap idiom to implement assignment.
 			return *this;
 		}
-
-		bool operator==(const node& first, const node& second) noexcept
+		/**
+		* Equality operator
+		*/
+		bool operator==(const node& first) noexcept
 		{
-			return (first.id_ == second.id_);
+			return (this->id() == first.id_);
 		}
+		/**
+		* Get an identifier
+		*/
 		const boost::uuids::uuid id() const noexcept
 		{
-			return _id;
+			return id_;
 		}
 		node(node&& that) noexcept
 		{
 			this->id = std::move(that.id_);
-			this->name_ = std::move(that.name_);
+			this->label_ = std::move(that.label_);
+			this->alias_ = std::move(other.alias_);
 			this->data_ = std::move(that.data_);
 		}
 		node& operator=(node&& that) noexcept
 		{
-			this->name_ = std::move(this->name_);
-			this->data_ = std::move(this->data_);
+			this->id = std::move(that.id_);
+			this->label_ = std::move(that.label_);
+			this->alias_ = std::move(other.alias_);
+			this->data_ = std::move(that.data_);
 			return *this;
 		}
-		bool operator==(const node& item)
-		{
-			return (id_ == item.id())
-		}
+		
 		virtual ~node() = default;
 
 	private:
@@ -78,7 +102,7 @@ namespace redisgraph
 			return u;
 
 		}
-		uint64_t id_;                /* Unique identifier of the node*/
+		boost::uuids::uuid id_;      /* Unique identifier of the node*/
 		std::string label_;          /* Label of the  node */
 		std::string alias_;          /* Alias of the node */
 		std::unique_ptr<T> data_;    /* Data contained in the node */
