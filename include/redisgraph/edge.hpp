@@ -1,19 +1,26 @@
 /**
- * @file   edge.hpp
- * @author Giorgio Zoppi (giorgio.zoppi@gmail.com)
- * @date   11/01/2019
- * @version 1.0.0
- * @ingroup redisgraphcpp
- * @brief A edge class representing the edges in a graph
- */
+* Copyright 2019 RRD Software Ltd.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+**/
+
 #ifndef REDIS_GRAPH_EDGE_H
 #define REDIS_GRAPH_EDGE_H
 #include <cstdint>
-#include <node.hpp>
-#include <node_hash.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include "node.hpp"
+#include "node_hash.hpp"
 
 namespace redisgraph {
 	

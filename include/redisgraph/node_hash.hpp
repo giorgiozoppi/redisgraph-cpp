@@ -14,9 +14,9 @@
 **/
 #ifndef REDIS_NODE_HASH_H
 #define REDIS_NODE_HASH_H
-#include <node.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <siphash.hpp>
+#include "node.hpp"
+#include "siphash.hpp"
 
 namespace std {
 template <typename T> struct hash<std::unique_ptr<redisgraph::node<T>>> {
@@ -30,14 +30,8 @@ template <typename T> struct hash<std::unique_ptr<redisgraph::node<T>>> {
   hash collisions.*/
 
   result_type operator()(const argument_type &c) const {
-    // sip_hash
-      redisgraph::siphash hash;
-      unsigned char uuid_data[16];
       // fill uuid_data
-      boost::uuids::uuid u = c->id();
-      memcpy(&uuid_data,&u,16);
-      hash()((void*)&uuid_data, 16);
-      return hash.computeHash();
+      return c->id();
   }
 };
 } // namespace std

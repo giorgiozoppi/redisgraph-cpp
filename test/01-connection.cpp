@@ -13,12 +13,10 @@
 * limitations under the License.
 **/
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
-
 #include "catch.hpp"
 #include <string>
 #include <utility>
-#include <redisgraph/graph.hpp>
+#include <redisgraph.hpp>
 #include <picojson/picojson.h>
 static const size_t NUMBER_THREADS = 4;	
 static const std::string defaultHost("127.0.0.1");

@@ -16,9 +16,11 @@
 #ifndef GRAPH_NODE_H
 #define GRAPH_NODE_H
 #include <string>
+#include <cstdint>
 #include <memory>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include "siphash.hpp"
 
 namespace redisgraph
 {
@@ -71,7 +73,7 @@ namespace redisgraph
 		/**
 		* Get an identifier
 		*/
-		const boost::uuids::uuid id() const noexcept
+		const uint64_t id() const noexcept
 		{
 			return id_;
 		}
@@ -94,15 +96,17 @@ namespace redisgraph
 		virtual ~node() = default;
 
 	private:
-		boost::uuids::uuid generate_id() const
+		uint64_t generate_id() const
 		{
+			redisgraph::siphash hashFunction;
 			boost::uuids::uuid u(boost::uuids::random_generator()());
-			std::vector<char> v(u.size());
-			std::copy(u.begin(), u.end(), v.begin());
-			return u;
+			uint64_t uuid_data[16];
+			std::memcpy(uuid_data, &u, 16);
+			hashFunction.set_data(uuid_data)
+			return hashFunction.computeHash();
 
 		}
-		boost::uuids::uuid id_;      /* Unique identifier of the node*/
+		uint64_t id_;      /* Unique identifier of the node*/
 		std::string label_;          /* Label of the  node */
 		std::string alias_;          /* Alias of the node */
 		std::unique_ptr<T> data_;    /* Data contained in the node */

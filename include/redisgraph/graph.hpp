@@ -22,11 +22,11 @@
 #include <unordered_map>
 #include <utility>
 #include <thread>
-#include <connection_context.hpp>
-#include <edge.hpp>
-#include <node.hpp> 
-#include <node_hash.hpp>
-#include <result_view.hpp>
+#include "connection_context.hpp"
+#include "edge.hpp"
+#include "node.hpp" 
+#include "node_hash.hpp"
+#include "result_view.hpp"
 
 namespace redisgraph {
 
@@ -80,7 +80,7 @@ namespace redisgraph {
 				context_ = std::move(g.context_);
 				name_ = std::move(g.name_);
 				num_nodes_ = std::move(g.num_nodes_);
-				graph_->start();
+				start();
 			}
 			~graph() {
 				if (started_)
