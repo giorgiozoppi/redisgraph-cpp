@@ -56,9 +56,11 @@ namespace redisgraph {
 			explicit graph(const std::string& name, const redisgraph::connection_context& context): name_(name), context_(context)
 			{
 				adj_matrix map;
-				graph_ = std::make_unique<adj_matrix>(map);
+				graph_ = std::make_unique<adj_matrix>(std::move(map));
 				started_ = false;
-			} 
+			}
+
+			
 			/**
 			* Copy constructor. The graph is not copyable.
 			* @param graph Graph to be copied.
@@ -99,6 +101,14 @@ namespace redisgraph {
 			*/
 			int num_nodes() const { return  num_nodes_; }
 			
+			/**
+			* Get the number of threads that will handle the graph
+			*/
+			uint16_t concurrency() const noexcept
+			{
+				return context_.n_threads();
+
+			}
 			/**
 			 * Add a node and label to the node.
 			 * @return A copy of the added node if added with success.
