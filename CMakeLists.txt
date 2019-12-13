@@ -109,5 +109,5 @@ MESSAGE(STATUS "BOOST_VERSION_OK ${BOOST_VERSION_OK}")
 
 add_executable(t-01-initgraph test/01-initgraph.cpp)
 target_link_libraries(t-01-initgraph ${LINK_DEPENDENCIES})
-add_test("Shoul_Init_GraphCorrectly" t-01-initgraph)
+add_test("Should_Init_GraphCorrectly" t-01-initgraph)
 

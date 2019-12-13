@@ -40,7 +40,8 @@ namespace redisgraph {
 		public:
 			typedef typename std::unique_ptr<node<T>> unique_node;
 			typedef typename std::hash<std::unique_ptr<redisgraph::node<T>>> node_hash;
-			typedef typename std::unordered_map <unique_node, std::vector<edge<T>>, node_hash> adj_matrix;
+			typedef typename std::equal_to<std::unique_ptr<redisgraph::node<T>>> node_equalto;
+			typedef typename std::unordered_map <unique_node, std::vector<edge<T>>, node_hash, node_equalto> adj_matrix;
 			//
 			/*
 			* Constructor
@@ -81,7 +82,6 @@ namespace redisgraph {
 				graph_ = std::move(g.graph_);
 				context_ = std::move(g.context_);
 				name_ = std::move(g.name_);
-				num_nodes_ = std::move(g.num_nodes_);
 				start();
 			}
 			~graph() {
@@ -99,7 +99,7 @@ namespace redisgraph {
 			/**
 			* Get the number of nodes
 			*/
-			int num_nodes() const { return  num_nodes_; }
+			size_t num_nodes() const { return graph_->size(); }
 			
 			/**
 			* Get the number of threads that will handle the graph
@@ -113,13 +113,14 @@ namespace redisgraph {
 			 * Add a node and label to the node.
 			 * @return A copy of the added node if added with success.
 			 */
-			std::optional<node<T>> add_node(const std::string& name, T data) noexcept
+			std::optional<node<T>> add_node(const std::string& name, const std::string& alias, T data, const size_t dataSize = 0) noexcept
 			{
-				node<T> current_node{ name, data };
-				auto node = graph_->find(current_node);
-				if (node != node.end())
+				auto node_ptr = redisgraph::make_unique_node(name, alias, data, dataSize);
+				auto node_iterator = graph_->find(node_ptr);
+				if (node_iterator == graph_->end())
 				{
-					graph_->insert(std::make_pair(std::make_unique<node>(current_node), std::vector()));
+					node<T> current_node(node_ptr->id(), name, alias, data);
+					graph_->insert(std::make_pair(std::move(node_ptr), std::vector<edge<T>>()));
 					return current_node;
 				}
 				return std::nullopt;
@@ -128,9 +129,19 @@ namespace redisgraph {
 			*  Remove a node 
 			*  @return A copy of the removed node
 			*/
-			std::optional<node<T>> remove_node(const std::string& name)
+			std::optional<node<T>> remove_node(const node<T>& current_node)
 			{
-
+				auto node_ptr = std::make_unique<node<T>>(current_node);
+				auto node_iterator = graph_->find(node_ptr);
+				if (node_iterator != graph_->end())
+				{
+					graph_->erase(node_iterator);
+					return node<T>(node_ptr->id(), 
+								   node_ptr->label(),
+								   node_ptr->alias(), 
+								   node_ptr->data());
+				}
+				return std::nullopt;
 			}
 			/**
 			* Add a new edge with a relation from the source node to the destination node
@@ -140,8 +151,8 @@ namespace redisgraph {
 					// find in the node relation if from source there is a node to destination.
 				auto currentNode = graph_->find(source);
 				bool existEdge = false;
-				if (currentNode != currentNode.end())
-				{
+				if (currentNode != graph_->end())
+				{ 
 					// found.
 					for (const auto& e : currentNode->second)
 					{
@@ -215,7 +226,6 @@ namespace redisgraph {
 				return (e.source() == sourceId) && (e.dest() == destinationId)
 			}
 			std::string name_;
-			int num_nodes_;
 			bool started_;
 			redisgraph::connection_context context_;
 			std::unique_ptr<adj_matrix> graph_;

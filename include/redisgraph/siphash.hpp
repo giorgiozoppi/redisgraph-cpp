@@ -17,8 +17,7 @@
 
 #include <cstdint>
 #include <algorithm>
-#include <boost/random/random_device.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
+#include <random>
 #define REDIS_GRAPH_SIPHASH_H
 
 namespace redisgraph
@@ -111,15 +110,13 @@ namespace redisgraph
                 , d_bufSize(0)
                 , d_totalLength(0)
         {
-            std::uint8_t d_seed[16];
-            boost::random_device rd;
-            for (int i = 0; i < 16; i++)
-            {
-                    boost::random::uniform_int_distribution<std::uint8_t> dis;
-                    d_seed[i] = dis(rd);
-            }
-            uint64_t k0 = redisgraph::u8to64_le(&d_seed[0]);
-            uint64_t k1 = redisgraph::u8to64_le(&d_seed[k_SEED_LENGTH / 2]);
+            std::uint32_t d_seed[4];
+            const std::uint8_t r_seed[16] = { 0x8a, 0x8a, 0xeb, 0x65,
+                                              0x5a, 0x39, 0xa5, 0x71,
+                                              0xb3, 0x83, 0x6b, 0xd5,
+                                              0x73, 0x71, 0xf8, 0xf1 };
+            uint64_t k0 = redisgraph::u8to64_le(&r_seed[0]);
+            uint64_t k1 = redisgraph::u8to64_le(&r_seed[k_SEED_LENGTH / 2]);
             d_v0 ^= k0;
             d_v1 ^= k1;
             d_v2 ^= k0;

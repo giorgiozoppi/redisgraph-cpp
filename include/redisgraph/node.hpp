@@ -20,10 +20,14 @@
 #include <memory>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "siphash.hpp"
 
 namespace redisgraph
 {
+	using namespace boost::uuids;
+	
+	
 	/**
 	* Graph node class
 	*/
@@ -33,20 +37,22 @@ namespace redisgraph
 		/**
 		* Constructor. An unique identifier gets generated.
 		* @param label label of the node
-		* @param  alias alias of the node
+		* @param alias alias of the node
 		* @param data value of the node (it might be a JSON or binary data)
 		*/
-		explicit node(const std::string& label, const std::string& alias, const T& data) : label_(label), alias_(alias), data_(std::make_unique<T>(_data))
+		explicit node(const uint64_t id, const std::string& label, const std::string& alias, const T& data) : id_(id), label_(label), alias_(alias), data_(std::make_unique<T>(data))
 		{
-			_id = generate_id();
 		}
 		/**
 		* Copy constructor
 		*/
-		explicit node(const node<T>& other) : label_(other.label_), alias_(other.alias_), id_(other.id_)
+
+		explicit node(const node<T>& other) : id_(other.id_),label_(other.label_), alias_(other.alias_)
 		{
 			//Do assignment logic
-			_data = std::make_unique<T>(other.data_)
+
+			data_ = std::make_unique<T>(*other.data_);
+			
 		}
 		/**
 		* Copy assignment constructor
@@ -58,7 +64,7 @@ namespace redisgraph
 				this->label_ = other.label_;
 				this->alias_ = other.alias_;
 				this->id_ = other.id_;
-				this->data_ = std::make_unique<T>(other.data_);
+				this->data_ = std::make_unique<T>(*other.data_);
 			}
 			// Use copy and swap idiom to implement assignment.
 			return *this;
@@ -77,18 +83,32 @@ namespace redisgraph
 		{
 			return id_;
 		}
+		const std::string alias() const noexcept
+		{
+			return alias_;
+		}
+		const std::string label() const noexcept
+		{
+			return label_;
+		}
+
+		const T data() const noexcept
+		{
+			return *data_;
+		}
+
 		node(node&& that) noexcept
 		{
-			this->id = std::move(that.id_);
+			this->id_ = that.id_;
 			this->label_ = std::move(that.label_);
-			this->alias_ = std::move(other.alias_);
+			this->alias_ = std::move(that.alias_);
 			this->data_ = std::move(that.data_);
 		}
 		node& operator=(node&& that) noexcept
 		{
-			this->id = std::move(that.id_);
+			this->id_ = that.id_;
 			this->label_ = std::move(that.label_);
-			this->alias_ = std::move(other.alias_);
+			this->alias_ = std::move(that.alias_);
 			this->data_ = std::move(that.data_);
 			return *this;
 		}
@@ -96,20 +116,23 @@ namespace redisgraph
 		virtual ~node() = default;
 
 	private:
-		uint64_t generate_id() const
-		{
-			redisgraph::siphash hashFunction;
-			boost::uuids::uuid u(boost::uuids::random_generator()());
-			uint64_t uuid_data[16];
-			std::memcpy(uuid_data, &u, 16);
-			hashFunction.set_data(uuid_data)
-			return hashFunction.computeHash();
-
-		}
 		uint64_t id_;      /* Unique identifier of the node*/
 		std::string label_;          /* Label of the  node */
 		std::string alias_;          /* Alias of the node */
 		std::unique_ptr<T> data_;    /* Data contained in the node */
+	};
+	template <typename T> std::unique_ptr<node<T>> make_unique_node(const std::string& label, 
+		const std::string& alias, 
+		const T& data, 
+		size_t data_size)
+	{
+		redisgraph::siphash hashFunction;
+		void* uuid_data = std::calloc(data_size, sizeof(uint8_t));
+		std::memcpy(uuid_data, &data, data_size);
+		hashFunction.set_data(uuid_data, data_size);
+		auto id = hashFunction.computeHash();
+		std::free(uuid_data);
+		return std::make_unique <node<T>>(id, label, alias, data);
 	};
 }
 #endif
