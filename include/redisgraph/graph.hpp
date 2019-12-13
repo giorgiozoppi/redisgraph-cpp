@@ -22,11 +22,13 @@
 #include <unordered_map>
 #include <utility>
 #include <thread>
+
 #include "connection_context.hpp"
 #include "edge.hpp"
 #include "node.hpp" 
 #include "node_hash.hpp"
 #include "result_view.hpp"
+#include "redis_executor.hpp"
 
 namespace redisgraph {
 
@@ -54,7 +56,9 @@ namespace redisgraph {
 			* @param context Redis Configuration
 			*/
 
-			explicit graph(const std::string& name, const redisgraph::connection_context& context): name_(name), context_(context)
+			explicit graph(const std::string& name, const redisgraph::connection_context& context): name_(name), 
+				context_(context), 
+				executor_(context)
 			{
 				adj_matrix map;
 				graph_ = std::make_unique<adj_matrix>(std::move(map));
@@ -78,20 +82,18 @@ namespace redisgraph {
 			 **/
 			explicit graph(graph&& g)
 			{
-				g.shutdown();
 				graph_ = std::move(g.graph_);
 				context_ = std::move(g.context_);
 				name_ = std::move(g.name_);
-				start();
+				executor_ = std::move(g.executor_);
+				
 			}
 			~graph() {
 				if (started_)
 				{
-				    shutdown();
+				    started_ = executor_.shutdown();
 				}
 			}
-
-			/// Getter and setter		
 			/**
 			* Get the name of the graph
 			*/
@@ -108,6 +110,36 @@ namespace redisgraph {
 			{
 				return context_.n_threads();
 
+			}
+			/**
+			* Add a new edge with a relation from the source node to the destination node
+			*/
+			std::optional<edge<T>> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest, const std::string& properties = "") noexcept
+			{
+				// find in the node relation if from source there is a node to destination.
+				auto node_ptr = std::make_unique<node<T>>(source);
+				auto currentNode = graph_->find(node_ptr);
+				bool existEdge = false;
+				if (currentNode != graph_->end())
+				{
+					// found.
+					for (const auto& e : currentNode->second)
+					{
+						if (find_direct_connection(source, dest, e))
+						{
+							existEdge = true;
+						}
+					}
+					if (!existEdge)
+					{
+						// we can add
+						auto currentEdge = edge<T>{ relation, source, dest, properties };
+						currentNode->second.push_back(currentEdge);
+						return currentEdge;
+					}
+				}
+				// in all cases return edge
+				return std::nullopt;
 			}
 			/**
 			 * Add a node and label to the node.
@@ -143,7 +175,9 @@ namespace redisgraph {
 				}
 				return std::nullopt;
 			}
-
+			/**
+			*  Get the edges from a given node
+			*/
 			std::vector<edge<T>> get_edges(const node<T>& source)
 			{
 				auto node_ptr = std::make_unique<node<T>>(source);
@@ -151,49 +185,24 @@ namespace redisgraph {
 				return currentNode->second;
 
 			}
-			/**
-			* Add a new edge with a relation from the source node to the destination node
-			*/
-			std::optional<edge<T>> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest, const std::string& properties = "") noexcept
-			{
-					// find in the node relation if from source there is a node to destination.
-				auto node_ptr = std::make_unique<node<T>>(source);
-				auto currentNode = graph_->find(node_ptr);
-				bool existEdge = false;
-				if (currentNode != graph_->end())
-				{ 
-					// found.
-					for (const auto& e : currentNode->second)
-					{
-						if (find_direct_connection(source, dest ,e))
-						{
-							existEdge = true;
-						}
-					}
-					if (!existEdge)
-					{
-						// we can add
-						auto currentEdge = edge<T>{ relation, source, dest, properties};
-						currentNode->second.push_back(currentEdge);
-						return currentEdge;
-					}
-				}
-				// in all cases return edge
-				return std::nullopt;
-			}
+			
 			/*
 			* startup the connection pool to redis 
 			*/
 			void start()
 			{
-				started_ = true;
+				started_ = executor_.start();
 			}
 			/**
 			 *  shutdown the connection pool to redis 
 			 */
 			void shutdown()
 			{
-				started_ = false;
+				started_ = executor_.shutdown();
+			}
+			void ping()
+			{
+
 			}
 			/**
 			 * Query asynchronously to redis graph
@@ -214,14 +223,6 @@ namespace redisgraph {
 			{
 				std::packaged_task<bool()> task([]() { return false; }); // wrap the function
 				return task.get_future();  // get 
-			}
-			
-			/**
-			* Commit the current graph structure in memory and flush its content
-			*/
-			bool flush()
-			{
-				return false;
 			}			
 		private:
 			bool find_direct_connection(const node<T>& source, const node<T>& dest, const edge<T>& e)
@@ -231,10 +232,10 @@ namespace redisgraph {
 				return (e.source() == sourceId) && (e.dest() == destinationId);
 			}
 			std::string name_;
-			bool started_;
 			redisgraph::connection_context context_;
+			redisgraph::redis_executor executor_;
+			bool started_;
 			std::unique_ptr<adj_matrix> graph_;
-			
 	};
 	template <typename T> graph<T> make_graph(const std::string& graph_name,
 		const std::string& host = "127.0.0.1",
@@ -245,7 +246,5 @@ namespace redisgraph {
 		graph<T> g(graph_name, ctx);
 		return g;
 	};
-
-	
 }
 #endif /* REDISGRAPH_CPP_GRAPH_H_ */

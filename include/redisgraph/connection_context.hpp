@@ -16,6 +16,7 @@
 #define REDIS_CONN_CONTEXT_H
 #include <cstdint>
 #include <string>
+#include <type_traits>
 
 // here we apply the rule of zero.
 namespace redisgraph {
@@ -28,11 +29,38 @@ public:
     * @param n_threads      Number of active threads
     * @param pool_size      Dimension of connection pool
     */
-    connection_context(const std::string& host,
+    explicit connection_context(const std::string& host,
         const uint16_t& redis_port = 6379, const size_t n_threads = 4, const size_t pool_size = 10): 
         redis_host_(host), redis_port_(redis_port), n_threads_(n_threads), pool_size_(pool_size)
     {
     }
+    connection_context(const connection_context& context)
+    {
+        redis_host_ = context.redis_host_;
+        redis_port_ = context.redis_port_;
+        n_threads_ = context.n_threads_;
+        pool_size_ = context.pool_size_;
+    }
+    connection_context(const connection_context&& context)
+    {
+        redis_host_ = std::move(context.redis_host_);
+        redis_port_ = context.redis_port_;
+        n_threads_ = context.n_threads_;
+        pool_size_ = context.pool_size_;
+    }
+    connection_context& operator=(const connection_context& context)
+    {
+        if (&context != this)
+        {
+            redis_host_ = context.redis_host_;
+            redis_port_ = context.redis_port_;
+            n_threads_ = context.n_threads_;
+            pool_size_ = context.pool_size_;
+        }
+        return *this;
+    }
+    ~connection_context() = default;
+
     /** 
     * Return the connection host
     */

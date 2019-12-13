@@ -115,3 +115,8 @@ add_executable(t-02-edgegraph test/02-edgegraph.cpp)
 target_link_libraries(t-02-edgegraph ${LINK_DEPENDENCIES})
 add_test("Should_Work_EdgeCorrectly" t-02-edgegraph)
 
+add_executable(t-03-redisconnection test/03-redisconnection.cpp)
+target_link_libraries(t-03-redisconnection ${LINK_DEPENDENCIES})
+add_test("Should_Connect_RedisCorrectly" t-03-redisconnection)
+
+
