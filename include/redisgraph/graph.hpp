@@ -202,7 +202,7 @@ namespace redisgraph {
 			}
 			void ping()
 			{
-
+				 executor_.ping();
 			}
 			/**
 			 * Query asynchronously to redis graph
