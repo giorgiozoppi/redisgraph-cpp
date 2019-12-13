@@ -111,3 +111,7 @@ add_executable(t-01-initgraph test/01-initgraph.cpp)
 target_link_libraries(t-01-initgraph ${LINK_DEPENDENCIES})
 add_test("Should_Init_GraphCorrectly" t-01-initgraph)
 
+add_executable(t-02-edgegraph test/02-edgegraph.cpp)
+target_link_libraries(t-02-edgegraph ${LINK_DEPENDENCIES})
+add_test("Should_Work_EdgeCorrectly" t-02-edgegraph)
+

@@ -19,6 +19,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <picojson/picojson.h>
 #include "node.hpp"
 #include "node_hash.hpp"
 
@@ -36,28 +37,35 @@ public:
    *  @param destination node destination
    */
   edge(const std::string &relation, const redisgraph::node<T> &source,
-       const redisgraph::node<T> &dest) 
+       const redisgraph::node<T> &dest, const std::string& properties = "") 
   {
     relation_ = boost::algorithm::to_upper_copy(relation);
     source_node_ = source.id();
     dest_node_ = dest.id();
 	edge_id_ = make_id();
+    if (!properties.empty())
+    {
+       picojson::parse(this->edge_properties_, properties);
+    }
   }
   /**
-   * Returns the source node index
+   * Get the source node index
    */
   uint64_t source() const { return source_node_; }
   /*
-   * Returns the destination node index
+   * Get the destination node index
    */
   uint64_t dest() const { return dest_node_; }
   /** 
-  * Returns the relation ship between source and destination
+  * Get the relation ship between source and destination
   */
   std::string relationship() const { return relation_; }
-  
   /**
-  * Return the identifier of the edege
+  * Get edge properties.
+  */
+  picojson::value properties() const { return edge_properties_;  }
+  /**
+  * Get the identifier of the edege
   */
   uint64_t id() const { return edge_id_; }
 
@@ -72,6 +80,7 @@ private:
   uint64_t source_node_;
   uint64_t dest_node_;
   uint64_t edge_id_;
+  picojson::value edge_properties_;
 };
 } // namespace redisgraph
 #endif

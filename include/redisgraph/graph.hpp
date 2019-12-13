@@ -143,13 +143,22 @@ namespace redisgraph {
 				}
 				return std::nullopt;
 			}
+
+			std::vector<edge<T>> get_edges(const node<T>& source)
+			{
+				auto node_ptr = std::make_unique<node<T>>(source);
+				auto currentNode = graph_->find(node_ptr);
+				return currentNode->second;
+
+			}
 			/**
 			* Add a new edge with a relation from the source node to the destination node
 			*/
-			std::optional<edge<T>> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest) noexcept
+			std::optional<edge<T>> add_edge(const std::string& relation, const node<T>& source, const node<T>& dest, const std::string& properties = "") noexcept
 			{
 					// find in the node relation if from source there is a node to destination.
-				auto currentNode = graph_->find(source);
+				auto node_ptr = std::make_unique<node<T>>(source);
+				auto currentNode = graph_->find(node_ptr);
 				bool existEdge = false;
 				if (currentNode != graph_->end())
 				{ 
@@ -164,7 +173,7 @@ namespace redisgraph {
 					if (!existEdge)
 					{
 						// we can add
-						auto currentEdge = edge{ relation, source.id(), dest.id() };
+						auto currentEdge = edge<T>{ relation, source, dest, properties};
 						currentNode->second.push_back(currentEdge);
 						return currentEdge;
 					}
@@ -215,15 +224,11 @@ namespace redisgraph {
 				return false;
 			}			
 		private:
-			void init_connection(const redisgraph::connection_context& context)
-			{
-
-			}
 			bool find_direct_connection(const node<T>& source, const node<T>& dest, const edge<T>& e)
 			{
 				auto sourceId = source.id();
 				auto destinationId = dest.id();
-				return (e.source() == sourceId) && (e.dest() == destinationId)
+				return (e.source() == sourceId) && (e.dest() == destinationId);
 			}
 			std::string name_;
 			bool started_;
@@ -240,5 +245,7 @@ namespace redisgraph {
 		graph<T> g(graph_name, ctx);
 		return g;
 	};
+
+	
 }
 #endif /* REDISGRAPH_CPP_GRAPH_H_ */

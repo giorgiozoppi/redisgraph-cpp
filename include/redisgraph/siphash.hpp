@@ -110,7 +110,6 @@ namespace redisgraph
                 , d_bufSize(0)
                 , d_totalLength(0)
         {
-            std::uint32_t d_seed[4];
             const std::uint8_t r_seed[16] = { 0x8a, 0x8a, 0xeb, 0x65,
                                               0x5a, 0x39, 0xa5, 0x71,
                                               0xb3, 0x83, 0x6b, 0xd5,
