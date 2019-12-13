@@ -7,17 +7,16 @@ Please, use __make__ to build the system and __make distclean__ to delete the au
 # Basic usage
 ### Create a graph
 ```c++
-    redisgraph::connection_context connection{"127.0.0.1", 6379};
-    std::unique_ptr<redisgraph::graph> graph = std::make_unique<redisgraph::graph>("Collegues", connection);
-    auto node1 = graph->add_node("Employee", "Liv Horowitz");
-    auto node2 = graph->add_node("Company", "London Software");
-    auto node3 = graph->add_node("Employee", "Danny Malley");
-    auto node4 = graph->add_node("Employee", "Patricia Lutz");
-    auto node5 = graph->add_node("Location", "London");
-    graph->add_edge(node1, node2, "Works");
-    graph->add_edge(node3, node2, "Works");
-    graph->add_edge(node4, node2, "Works");
-    graph->add_edge(node2, node5, "Located");
+    redisgraph::connection_context connection{"127.0.0.1", 6379, 4};
+    redisgraph::graph<picojson::value> g("Social", ctx);
+    std::string firstNodeStr = "{ \"name\": \"Luis\", \"surname\": \"Moreno\",\"age\": 33 }";
+    std::string secondNodeStr = "{ \"name\": \"Japan\"}";
+    auto first = g.add_node("Person", "", redisgraph::make_node_data(firstNodeStr).value());
+    auto second = g.add_node("Country", "", redisgraph::make_node_data(secondNodeStr).value());
+    auto currentEdge = g.add_edge("VISIT", first.value(), second.value(), "{\"purpose\": \"pleasure\"}").value();
+    auto edge_nodes = g.get_edges(first.value());
+    auto edge = std::find_if(edge_nodes.begin(), edge_nodes.end(), [&currentEdge](const redisgraph::edge<picojson::value>& e)
+        { return e.id() == currentEdge.id(); });
     // now we write the graph to redis
     auto commitResult = graph->commit_async();
     // we do something else.
