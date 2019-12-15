@@ -204,11 +204,10 @@ namespace redisgraph {
 			 * Query asynchronously to redis graph
 			 * @param query OpenCypher Query
 			 */
-			std::future<redisgraph::result_view> query_async(const std::string& query)
-			{
-				std::packaged_task<redisgraph::result_view()> task([]() { return result_view(); }); // wrap the function
 				
-				return task.get_future();  // get 
+			void query_async(const std::string& query, std::promise<redisgraph::result_view>&& result_promise)
+			{
+				executor.send_message(query, std::move(result_promise));
 			}
 
 			/**
@@ -216,7 +215,7 @@ namespace redisgraph {
 			 * @throw When there are connection problems
 			 * @return Return a future to the result (true when it has succeded)
 			 */
-			std::future<bool> commit_async()
+		    bool commit()
 			{
 				std::packaged_task<bool()> task([]() { return false; }); // wrap the function
 				return task.get_future();  // get 

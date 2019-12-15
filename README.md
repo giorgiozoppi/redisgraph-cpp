@@ -18,10 +18,8 @@ Please, use __make__ to build the system and __make distclean__ to delete the au
     auto edge = std::find_if(edge_nodes.begin(), edge_nodes.end(), [&currentEdge](const redisgraph::edge<picojson::value>& e)
         { return e.id() == currentEdge.id(); });
     // now we write the graph to redis
-    auto commitResult = graph->commit_async();
-    // we do something else.
-    auto result = commitResult.get();
-    if (result > 0) 
+    auto commit_state = graph->commit();
+    if (commit_state) 
     {
         std::cout << "Graph created with success" << std::endl;
     }
@@ -31,7 +29,11 @@ Please, use __make__ to build the system and __make distclean__ to delete the au
 const int NUMBER_THREADS = 4;
  redisgraph::connection_context ctx('127.0.0.1','6379', NUMBER_THREADS);
  redisgraph::graph api("social",ctx);  
- auto results = api.query_async("MATCH (a:person), (b:person) WHERE (a.name = 'roi' AND b CREATE (a)-[:knows]->(b)");
- use_results(results);
+ std::promise<redisgraph::result_view> view_promise;
+ auto results = view_promise.get_future();
+ api.query_async("MATCH (a:person), (b:person) WHERE (a.name = 'roi' AND b CREATE (a)-[:knows]->(b)", std::move(view_promise));
+ // do something else.
+ // ok get results.
+ auto = results.get();
 ```
 
