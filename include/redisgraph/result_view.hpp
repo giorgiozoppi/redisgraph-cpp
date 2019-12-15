@@ -24,12 +24,32 @@
 
 namespace redisgraph {
 
+	enum class result_view_coltype_t {
+		COLUMN_UNKNOWN = 0,
+		COLUMN_SCALAR = 1,
+		COLUMN_NODE = 2,
+		COLUMN_RELATION = 3,
+	};
+	enum class result_view_scalartype_t 
+	{
+		VALUE_UNKNOWN = 0,
+		VALUE_NULL = 1,
+		VALUE_STRING = 2,
+		VALUE_INTEGER = 3,
+		VALUE_BOOLEAN = 4,
+		VALUE_DOUBLE = 5,
+		VALUE_ARRAY = 6,
+		VALUE_EDGE = 7,
+		VALUE_NODE = 8,
+		VALUE_PATH = 9
+	};
+
 	class result_view
 	{
-	public :
+	public:
 		result_view() = default;
 
-		result_view(const std::string& result): value_(result)
+		result_view(const std::string& result) : value_(result)
 		{
 			parse();
 		}
@@ -43,6 +63,14 @@ namespace redisgraph {
 		}
 	private:
 		std::string value_;
+		static const std::string LABELS_ADDED_;
+		static const std::string NODES_CREATED_ = "Nodes created";
+		/*	NODES_DELETED = 'Nodes deleted'
+			RELATIONSHIPS_DELETED = 'Relationships deleted'
+			PROPERTIES_SET = 'Properties set'
+			RELATIONSHIPS_CREATED = 'Relationships created'
+			INTERNAL_EXECUTION_TIME = 'internal execution time'
+			*/
 		bool valid_;
 		void parse()
 		{

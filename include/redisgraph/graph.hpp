@@ -209,9 +209,42 @@ namespace redisgraph {
 
 		void query_async(const std::string& query, std::promise<redisgraph::result_view>&& result_promise)
 		{
-			executor.send_message(query, std::move(result_promise));
-		}
 
+			std::ostringstream query_message;
+			{
+				const std::lock_guard<std::recursive_mutex> lock(mutex_);
+				query_message << "GRAPH.QUERY ";
+				query_message << this->name_;
+				query_message << " \"" + query + " \"";
+				query_message << " --compact";
+			}
+			executor.send_message(query_message.str(), std::move(result_promise));
+		}
+	    void delete_graph()
+		{
+			std::promise<redisgraph::result_view> result_promise;
+			std::future<redisgraph::result_view> results;
+			std::ostringstream query_message;
+			results = result_promise.get_future();
+			query_message << "GRAPH.QUERY ";
+			query_message << this->name_;
+			query_message << " --compact";
+			executor.send_message(query_message.str(), std::move(result_promise));
+			results.get();
+			flush();
+		}
+		void flush()
+		{
+			for (const auto& pair : *graph_)
+			{
+				pair.second.clear();
+				pair.first.reset();
+			}
+			graph_.reset();
+			adj_matrix map;
+			graph_ = std::make_unique<adj_matrix>(std::move(map));
+			started_ = false;
+		}
 		/**
 		 * Commit the current graph structure in memory to redis graph creating a graph
 		 * @throw When there are connection problems
@@ -225,7 +258,10 @@ namespace redisgraph {
 			}
 			std::vector<redisgraph::edge<T>> edges;
 			std::ostringstream query_message;
-			query_message << "CREATE ";
+			query_message << "GRAPH.QUERY ";
+			query_message << this->name_;
+			query_message << " \"";
+			query_message << " CREATE ";
 			for (const auto& n : *graph_)
 			{
 				query_message << n.first->str();
@@ -248,6 +284,8 @@ namespace redisgraph {
 				}
 				count++;
 			}
+			query_message << " \"";
+			query_message << " --compact";
 			std::promise<redisgraph::result_view> view;
 			std::future<redisgraph::result_view> f = view.get_future();
 			executor.send_message(query_message.str(), view);
@@ -265,6 +303,7 @@ namespace redisgraph {
 		redisgraph::connection_context context_;
 		redisgraph::redis_executor executor_;
 		bool started_;
+		std::recursive_mutex mutex_;
 		std::unique_ptr<adj_matrix> graph_;
 	};
 	template <typename T> graph<T> make_graph(const std::string& graph_name,
