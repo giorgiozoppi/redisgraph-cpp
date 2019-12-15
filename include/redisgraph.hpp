@@ -8,4 +8,6 @@
 #include <redisgraph/node_hash.hpp>
 #include <redisgraph/result_view.hpp>
 #include <redisgraph/json_node.hpp>
+#include <redisgraph/exception/connection_exception.hpp>
+
 #endif

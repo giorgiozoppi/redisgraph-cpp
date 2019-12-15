@@ -27,6 +27,7 @@
 #include "connection_context.hpp"
 #include "result_view.hpp"
 #include "redis_context.hpp"
+#include "exception/connection_exception.hpp"
 
 #if (defined(_MSC_VER) && (_MSC_VER >= 1400))
 #define _CRT_SECURE_NO_WARNINGS
@@ -42,7 +43,7 @@ namespace redisgraph {
 	class redis_executor 
 	{
 		public:
-
+			static const int REDIS_CONNECTION_ERROR = 400;
 			explicit redis_executor(const redisgraph::connection_context& context):context_(context)
 			{
 				started_ = false;
@@ -131,24 +132,36 @@ namespace redisgraph {
 			 */
 			bool shutdown()
 			{
-				std::for_each(threadpool_.begin(), threadpool_.end(), [](std::thread& t)
-					{
-						t.join();
-					});
+				if (started_)
+				{
+					std::for_each(threadpool_.begin(), threadpool_.end(), [](std::thread& t)
+						{
+							t.join();
+						});
 
-				executor_context_ptr_.reset();
-				io_context_.stop();
-				threadpool_.clear();
-			    started_ = false;
+					executor_context_ptr_.reset();
+					io_context_.stop();
+					threadpool_.clear();
+					started_ = false;
+				}
 				return true;
 			}
 		    void init_connection(const redisgraph::connection_context context)
 			{
-				auto ip_address = asio::ip::address::from_string(context.host());
-				asio::ip::tcp::endpoint end_point(ip_address, context.port());
-				socket_t socket(io_context_, end_point.protocol());
-				socket.connect(end_point);
-				executor_context_ptr_= std::make_unique<redis_executor_context_t>(std::move(socket), io_context_);
+				try
+				{
+					auto ip_address = asio::ip::address::from_string(context.host());
+					asio::ip::tcp::endpoint end_point(ip_address, context.port());
+					socket_t socket(io_context_, end_point.protocol());
+					socket.connect(end_point);
+					executor_context_ptr_ = std::make_unique<redis_executor_context_t>(std::move(socket), io_context_);
+				}
+				catch (const std::exception & ex)
+				{
+					started_ = false;
+					auto code = std::error_code(redis_executor::REDIS_CONNECTION_ERROR, std::system_category());
+					throw connection_exception(code, ex.what());
+				}
 			}
 			redisgraph::connection_context context_;
 			bool started_;
