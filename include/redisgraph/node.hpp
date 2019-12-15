@@ -13,8 +13,8 @@
 * limitations under the License.
 **/
 
-#ifndef GRAPH_NODE_H
-#define GRAPH_NODE_H
+#ifndef REDISGRAPH_CPP_NODE_H
+#define REDISGRAPH_CPP_NODE_H
 #include <string>
 #include <cstdint>
 #include <memory>

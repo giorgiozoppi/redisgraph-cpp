@@ -12,8 +12,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 **/
-#ifndef REDIS_NODE_HASH_H
-#define REDIS_NODE_HASH_H
+#ifndef REDISGRAPH_CPP_NODE_HASH_H
+#define REDISGRAPH_CPP_NODE_HASH_H
 #include <boost/uuid/uuid.hpp>
 #include <picojson/picojson.h>
 #include "node.hpp"

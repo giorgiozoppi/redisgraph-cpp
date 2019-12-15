@@ -13,12 +13,39 @@
 * limitations under the License.
 **/
 
-#ifndef REDIS_GRAPH_RESULT_VIEW_H
-#define REDIS_GRAPH_RESULT_VIEW_H
-namespace redisgraph {
-	struct result_view
-	{
+#ifndef REDISGRAPH_CPP_RESULT_VIEW_H
+#define REDISGRAPH_CPP_RESULT_VIEW_H
+#include <string>
+#include <future>
+#include <memory>
+#include <optional>
+#include <utility>
+#include <thread>
 
-   };
+namespace redisgraph {
+
+	class result_view
+	{
+	public :
+		result_view() = default;
+
+		result_view(const std::string& result): value_(result)
+		{
+			parse();
+		}
+		std::string value() const noexcept
+		{
+			return value_;
+		}
+	private:
+		std::string value_;
+		void parse()
+		{
+		//	auto extract = boost::apply_visitor(redis::extractor<Iterator>(), view);
+			//	auto& reply = boost::get<redis::extracts::string_t>(extract);
+			//	value_ = reply.str;
+		}
+
+    };
 }
 #endif

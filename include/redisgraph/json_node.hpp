@@ -1,5 +1,5 @@
-#ifndef JSON_NODE_HPP
-#define JSON_NODE_HPP
+#ifndef REDISGRAPH_CPP_JSON_NODE_H
+#define REDISGRAPH_CPP_JSON_NODE_H
 #include <memory.h>
 #include <cstdint>
 #include <string>

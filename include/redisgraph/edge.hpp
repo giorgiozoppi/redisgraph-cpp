@@ -13,8 +13,8 @@
 * limitations under the License.
 **/
 
-#ifndef REDIS_GRAPH_EDGE_H
-#define REDIS_GRAPH_EDGE_H
+#ifndef REDISGRAPH_CPP_EDGE_H
+#define REDISGRAPH_CPP_EDGE_H
 #include <cstdint>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>

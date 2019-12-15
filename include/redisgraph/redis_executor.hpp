@@ -15,6 +15,7 @@
 
 #ifndef REDISGRAPH_CPP_REDISEXECUTOR_H_
 #define REDISGRAPH_CPP_REDISEXECUTOR_H_
+#pragma once
 #include <string>
 #include <future>
 #include <memory>
@@ -30,27 +31,11 @@
 #if (defined(_MSC_VER) && (_MSC_VER >= 1400))
 #define _CRT_SECURE_NO_WARNINGS
 #endif // _MSC_VER >= 1400
+namespace redis = bredis;
+namespace asio = boost::asio;
 
 
 namespace redisgraph {
-	namespace redis = bredis;
-	namespace asio = boost::asio;
-	namespace sys = boost::system;
-	using socket_t = asio::ip::tcp::socket;
-	using next_layer_t = socket_t;
-	using Buffer = boost::asio::streambuf;
-	using Iterator = typename redis::to_iterator<Buffer>::iterator_t;
-	using Policy = redis::parsing_policy::keep_result;
-	using result_t = redis::positive_parse_result_t<Iterator, Policy>;
-	using Connection = redis::Connection<next_layer_t>;
-	struct redis_executor_context_t {
-		Buffer tx_buff;
-		Buffer rx_buff;
-		Connection conn;
-		asio::io_context& io;
-		asio::io_context::strand strand;
-		redis_executor_context_t(socket_t&& s, asio::io_context& context) : conn{ std::move(s) }, io(context), strand(context) {}
-	};
 	/*
 	* Create a graph interface with nodes that contains data of type T
 	*/
@@ -61,7 +46,6 @@ namespace redisgraph {
 			explicit redis_executor(const redisgraph::connection_context& context):context_(context)
 			{
 				started_ = false;
-			//	socket_ = init_connection(context);
 			}
 			
 			/**
@@ -81,7 +65,6 @@ namespace redisgraph {
 			{
 				g.shutdown();
 				started_ = false;
-				//socket_ = std::move(g.socket_);
 			}
 
 			bool is_started() const
@@ -111,20 +94,38 @@ namespace redisgraph {
 				started_ = true;
 				return started_;
 			}
-			void ping()
+
+			void send_message(const std::string& message, std::promise<redisgraph::result_view>&& result_promise)
 			{
-				redis::single_command_t cmd_ping{ "PING" };
-				executor_context_ptr_->conn.async_write(
-					executor_context_ptr_->tx_buff,
-					cmd_ping,
-					asio::bind_executor(executor_context_ptr_->strand, [this](const sys::error_code& ec, std::size_t bytes_transferred) {
-						if (!ec) {
-							auto self = this;
-							self->executor_context_ptr_->tx_buff.consume(bytes_transferred);
-						}
-						})
-				);
-			}
+					redis::single_command_t cmd{ message };
+
+					executor_context_ptr_->conn.async_write(
+						executor_context_ptr_->tx_buff,
+						cmd,
+						asio::bind_executor(executor_context_ptr_->strand, [this, &result_promise](const sys::error_code& ec, std::size_t bytes_transferred)
+							{
+							if (!ec) {
+								auto self = this;
+								self->executor_context_ptr_->tx_buff.consume(bytes_transferred);
+								executor_context_ptr_->conn.async_read(
+									executor_context_ptr_->rx_buff,
+									asio::bind_executor(executor_context_ptr_->strand, [this, &result_promise](const sys::error_code& ec, result_t&& r) {
+										if (!ec) {
+											auto self = this;
+											auto extract = boost::apply_visitor(redis::extractor<Iterator>(), r.result);
+											auto& reply_str = boost::get<r::extracts::string_t>(extract);
+											redisgraph::result_view view(reply_str.str);
+											result_promise.set_value(view);
+											self->executor_context_ptr_->rx_buff.consume(r.consumed);
+											// parse and set result.
+										}
+										}));
+								//self->produce();
+							}
+							}));
+					
+					
+			}		
 			/**
 			 *  shutdown the connection pool to redis 
 			 */
@@ -138,6 +139,7 @@ namespace redisgraph {
 				executor_context_ptr_.reset();
 				io_context_.stop();
 				threadpool_.clear();
+			    started_ = false;
 				return true;
 			}
 		    void init_connection(const redisgraph::connection_context context)

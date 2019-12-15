@@ -1,7 +1,6 @@
-#ifndef REDIS_UTILS_H 
-#define REDIS_UTILS_H
-#ifdef __OK__
-
+#ifndef REDISGRAPH_CPP_REDIS_CONTEXT_H 
+#define REDISGRAPH_CPP_REDIS_CONTEXT_H
+#pragma once
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <bredis.hpp>
@@ -19,15 +18,13 @@ using Connection = r::Connection<next_layer_t>;
 
 namespace redisgraph
 {
-    struct redis_accessor_t {
+    struct redis_executor_context_t {
         Buffer tx_buff;
         Buffer rx_buff;
         Connection conn;
         asio::io_context& io;
         asio::io_context::strand strand;
-        redis_accessor_t(socket_t&& s, asio::io_context& context) : conn{ std::move(s) }, io(context), strand(context){}
+        redis_executor_context_t(socket_t&& s, asio::io_context& context) : conn{ std::move(s) }, io(context), strand(context) {}
     };
 }
-
-#endif
 #endif

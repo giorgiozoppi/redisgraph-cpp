@@ -200,10 +200,6 @@ namespace redisgraph {
 			{
 				started_ = executor_.shutdown();
 			}
-			void ping()
-			{
-				 executor_.ping();
-			}
 			/**
 			 * Query asynchronously to redis graph
 			 * @param query OpenCypher Query
@@ -211,6 +207,7 @@ namespace redisgraph {
 			std::future<redisgraph::result_view> query_async(const std::string& query)
 			{
 				std::packaged_task<redisgraph::result_view()> task([]() { return result_view(); }); // wrap the function
+				
 				return task.get_future();  // get 
 			}
 
