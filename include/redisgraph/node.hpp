@@ -57,7 +57,7 @@ namespace redisgraph
 		/**
 		* Copy assignment constructor
 		*/
-		node& operator=(node const& other)
+		node<T>& operator=(node<T> const& other)
 		{
 			if (this != &other)
 			{
@@ -95,6 +95,26 @@ namespace redisgraph
 		const T data() const noexcept
 		{
 			return *data_;
+		}
+
+		std::string str(const std::string& properties = "") const
+		{
+			std::ostringstream nodestream;
+			nodestream << "(";
+			if (!this->alias_.empty())
+			{
+				nodestream << this->alias_;
+			}
+			if (!this->label_.empty())
+			{
+				nodestream << ':' + self.label;
+			}
+			if (!properties.empty())
+			{
+				nodestream << properties;
+			}
+			nodestream << ")";
+			return nodestream.str();
 		}
 
 		node(node&& that) noexcept

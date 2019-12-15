@@ -37,8 +37,13 @@ namespace redisgraph {
 		{
 			return value_;
 		}
+		bool valid() const
+		{
+			return valid_;
+		}
 	private:
 		std::string value_;
+		bool valid_;
 		void parse()
 		{
 		//	auto extract = boost::apply_visitor(redis::extractor<Iterator>(), view);

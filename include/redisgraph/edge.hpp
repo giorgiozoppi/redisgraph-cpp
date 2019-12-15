@@ -40,8 +40,8 @@ public:
        const redisgraph::node<T> &dest, const std::string& properties = "") 
   {
     relation_ = boost::algorithm::to_upper_copy(relation);
-    source_node_ = source.id();
-    dest_node_ = dest.id();
+    source_node_ = source;
+    dest_node_ = dest;
 	edge_id_ = make_id();
     if (!properties.empty())
     {
@@ -51,11 +51,11 @@ public:
   /**
    * Get the source node index
    */
-  uint64_t source() const { return source_node_; }
+  uint64_t source() const { return source_node_.id(); }
   /*
    * Get the destination node index
    */
-  uint64_t dest() const { return dest_node_; }
+  uint64_t dest() const { return dest_node_.id(); }
   /** 
   * Get the relation ship between source and destination
   */
@@ -69,6 +69,31 @@ public:
   */
   uint64_t id() const { return edge_id_; }
 
+  bool operator==(const edge& other) const
+  {
+      return (edge_id == other.edge_id_);
+  }
+  /** Get str of the node in cypher*/
+  std::string str() const 
+  {
+      std::ostringstream egdestream;
+      edgestream << "(";
+      edgestream << this->source_node_.alias();
+      edgestream << ")";
+      edgestream << "-[";
+      if (!this->relationship().empty())
+      {
+          edgestream << ":";
+          edgestream << this->relationship():
+      }
+      edgestream << this->edge_properties_.to_str();
+      edgestream << "]->";
+      edgestream << "(";
+      edgestream << this->destination_node_.alias();
+      edgestream << ')';
+      return edgestream.str();
+  }
+
 private:
 	uint64_t make_id()
 	{
@@ -77,8 +102,8 @@ private:
 		return currentId;
 	}
   std::string relation_;
-  uint64_t source_node_;
-  uint64_t dest_node_;
+  redisgraph::node<T> source_node_;
+  redisgraph::node<T> dest_node_;
   uint64_t edge_id_;
   picojson::value edge_properties_;
 };
