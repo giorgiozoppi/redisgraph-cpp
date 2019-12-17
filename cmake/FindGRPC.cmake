@@ -274,10 +274,10 @@ function(PROTOBUF_GENERATE_PYTHON SRCS)
     get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
 
     list(APPEND _protobuf_include_path -I ${FIL_DIR})
-    list(APPEND ${SRCS} "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py")
+    list(APPEND ${SRCS} "${PYTHON_PROTO}/${FIL_WE}_pb2.py")
     add_custom_command(
-      OUTPUT "${CMAKE_BINARY_DIR}/${FIL_WE}_pb2.py"
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE} --python_out ${CMAKE_BINARY_DIR} ${_protobuf_include_path} ${ABS_FIL}
+      OUTPUT "${PYTHON_PROTO}/${FIL_WE}_pb2.py"
+      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE} --python_out ${PYTHON_PROTO} ${_protobuf_include_path} ${ABS_FIL}
       DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running Python protocol buffer compiler on ${FIL}"
       VERBATIM )

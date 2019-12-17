@@ -65,10 +65,10 @@ set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/fraud_service.proto
 )
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/proto-generated)
-set(PROTO_SRC_PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR}/protopy-generated)
+set(PYTHON_PROTO ${CMAKE_CURRENT_SOURCE_DIR}/protopy-generated)
 
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
-file(MAKE_DIRECTORY ${PROTO_SRC_PYTHON_DIR})
+file(MAKE_DIRECTORY ${PYTHON_PROTO})
 
 
 include_directories(${PROTO_SRC_DIR})
