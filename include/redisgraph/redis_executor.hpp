@@ -44,6 +44,9 @@ namespace redisgraph {
 	{
 		public:
 			static const int REDIS_CONNECTION_ERROR = 400;
+			
+			redis_executor() = default;
+
 			explicit redis_executor(const redisgraph::connection_context& context):context_(context)
 			{
 				started_ = false;
@@ -95,11 +98,14 @@ namespace redisgraph {
 				started_ = true;
 				return started_;
 			}
-
 			void send_message(const std::string& message, std::promise<redisgraph::result_view>&& result_promise)
 			{
-					redis::single_command_t cmd{ message };
-
+				redis::single_command_t cmd{ message };
+				send_command(cmd, std::move(result_promise));
+			}
+			
+			void send_command(const redis::single_command_t& cmd, std::promise<redisgraph::result_view>&& result_promise)
+			{
 					executor_context_ptr_->conn.async_write(
 						executor_context_ptr_->tx_buff,
 						cmd,
@@ -113,19 +119,31 @@ namespace redisgraph {
 									asio::bind_executor(executor_context_ptr_->strand, [this, &result_promise](const sys::error_code& ec, result_t&& r) {
 										if (!ec) {
 											auto self = this;
-											auto extract = boost::apply_visitor(redis::extractor<Iterator>(), r.result);
-											auto& reply_str = boost::get<r::extracts::string_t>(extract);
-											redisgraph::result_view view(reply_str.str);
+											auto result = r.result;
+											//auto extract = boost::apply_visitor(redis::extractor<Iterator>(), r.result);
+											//auto& replies =
+										//		boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+											//auto t1 = replies.elements[0];
+										//	auto& reply_str = boost::get<r::extracts::array_holder_t>(extract);
+											redisgraph::result_view view;
 											result_promise.set_value(view);
 											self->executor_context_ptr_->rx_buff.consume(r.consumed);
 											// parse and set result.
 										}
+										else
+										{
+											redisgraph::result_view read_error_view;
+											result_promise.set_value(read_error_view);
+										}
 										}));
 								//self->produce();
 							}
+							else
+							{
+								redisgraph::result_view write_error_view;
+								result_promise.set_value(write_error_view);
+							}
 							}));
-					
-					
 			}		
 			/**
 			 *  shutdown the connection pool to redis 

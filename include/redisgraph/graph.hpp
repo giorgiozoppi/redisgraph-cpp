@@ -31,6 +31,10 @@
 #include "node_hash.hpp"
 #include "result_view.hpp"
 #include "redis_executor.hpp"
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT 
+#define _WIN32_WINNT 0x0A00
+#endif
 
 namespace redisgraph {
 
@@ -82,13 +86,11 @@ namespace redisgraph {
 		/**
 		 * Move semantics
 		 **/
-		explicit graph(graph&& g)
+		explicit graph(graph&& g) : graph_(std::move(g.graph_)), 
+			context_(std::move(g.context_)),
+			name_(std::move(g.name_)),
+			executor_(std::move(g.executor_))
 		{
-			graph_ = std::move(g.graph_);
-			context_ = std::move(g.context_);
-			name_ = std::move(g.name_);
-			executor_ = std::move(g.executor_);
-
 		}
 		~graph() {
 			if (started_)
@@ -209,27 +211,17 @@ namespace redisgraph {
 
 		void query_async(const std::string& query, std::promise<redisgraph::result_view>&& result_promise)
 		{
-
-			std::ostringstream query_message;
-			{
-				const std::lock_guard<std::recursive_mutex> lock(mutex_);
-				query_message << "GRAPH.QUERY ";
-				query_message << this->name_;
-				query_message << " \"" + query + " \"";
-				query_message << " --compact";
-			}
-			executor.send_message(query_message.str(), std::move(result_promise));
+			bredis::single_command_t command("GRAPH.QUERY", this->name_, query, " --compact");
+			executor_.send_command(command, std::move(result_promise));
 		}
 	    void delete_graph()
 		{
 			std::promise<redisgraph::result_view> result_promise;
 			std::future<redisgraph::result_view> results;
-			std::ostringstream query_message;
+			std::string query_message  = "MATCH (n) DELETE n";
+			bredis::single_command_t command("GRAPH.QUERY", this->name_, query, "MATCH (n) DELETE n");
 			results = result_promise.get_future();
-			query_message << "GRAPH.QUERY ";
-			query_message << this->name_;
-			query_message << " --compact";
-			executor.send_message(query_message.str(), std::move(result_promise));
+			executor_.send_command(command, std::move(result_promise));
 			results.get();
 			flush();
 		}
@@ -258,10 +250,7 @@ namespace redisgraph {
 			}
 			std::vector<redisgraph::edge<T>> edges;
 			std::ostringstream query_message;
-			query_message << "GRAPH.QUERY ";
-			query_message << this->name_;
-			query_message << " \"";
-			query_message << " CREATE ";
+			query_message << "CREATE ";
 			for (const auto& n : *graph_)
 			{
 				query_message << n.first->str();
@@ -284,11 +273,10 @@ namespace redisgraph {
 				}
 				count++;
 			}
-			query_message << " \"";
-			query_message << " --compact";
+			bredis::single_command_t command("GRAPH.QUERY", this->name_, query_message.str());
 			std::promise<redisgraph::result_view> view;
 			std::future<redisgraph::result_view> f = view.get_future();
-			executor.send_message(query_message.str(), view);
+			executor_.send_message(command, view);
 			auto resultset = view.get();
 			return resultset.valid();
 		}

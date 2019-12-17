@@ -34,6 +34,8 @@ namespace redisgraph
 	template <typename T> class node
 	{
 	public:
+
+		node() = default;
 		/**
 		* Constructor. An unique identifier gets generated.
 		* @param label label of the node
@@ -43,10 +45,10 @@ namespace redisgraph
 		explicit node(const uint64_t id, const std::string& label, const std::string& alias, const T& data) : id_(id), label_(label), alias_(alias), data_(std::make_unique<T>(data))
 		{
 		}
+
 		/**
 		* Copy constructor
 		*/
-
 		explicit node(const node<T>& other) : id_(other.id_),label_(other.label_), alias_(other.alias_)
 		{
 			//Do assignment logic

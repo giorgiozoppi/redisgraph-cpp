@@ -14,6 +14,7 @@
 **/
 #ifndef REDISGRAPH_CPP_NODE_HASH_H
 #define REDISGRAPH_CPP_NODE_HASH_H
+#pragma once
 #include <boost/uuid/uuid.hpp>
 #include <picojson/picojson.h>
 #include "node.hpp"

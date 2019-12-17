@@ -1,0 +1,6 @@
+
+{
+    "same_cookie" : { "fraud_score" : 0.90, "query": ""},
+    "bad_shipping" : { "fraud_score" : 0.90, "query": ""},
+    "small_big_amount" : { "fraud_score" : 0.90, "query": ""}    
+}

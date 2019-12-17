@@ -1,6 +1,7 @@
 #
 # Project Properties
 #
+
 if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       CACHE STRING "")
@@ -16,13 +17,26 @@ SET (APPLICATION_VERSION_PATCH 0)
 SET (APPLICATION_VERSION_TYPE SNAPSHOT)
 SET (APPLICATION_VERSION_STRING "${APPLICATION_VERSION_MAJOR}.${APPLICATION_VERSION_MINOR}.${APPLICATION_VERSION_PATCH}-${APPLICATION_VERSION_TYPE}")
 SET (APPLICATION_ID "${APPLICATION_VENDOR_ID}.${PROJECT_NAME}")
-
+SET (DEMO_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/demo")
 #
 # Compiler Options
 #
 SET (CMAKE_VERBOSE_MAKEFILE 0) # Use 1 for debugging, 0 for release
 SET (CMAKE_CXX_STANDARD 17)
 SET (CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Cmake find modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+set(protobuf_MODULE_COMPATIBLE TRUE)
+find_package(Protobuf REQUIRED)
+message(STATUS "Using protobuf ${protobuf_VERSION}")
+find_package(GRPC  REQUIRED)
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(c-ares CONFIG REQUIRED)
 
 #
 # Project Output Paths
@@ -43,12 +57,30 @@ include_directories("${MAINFOLDER}/include" "${MAINFOLDER}/third-party/cpp-bredi
 #
 include (CTest)
 enable_testing()
-
-
 add_definitions(-DBOOST_ERROR_CODE_HEADER_ONLY)
 add_definitions(-DBOOST_COROUTINES_NO_DEPRECATION_WARNING)
 
-#ADD_SUBDIRECTORY(src)
+include_directories(${Protobuf_INCLUDE_DIRS})
+set(PROTOS
+    ${CMAKE_CURRENT_SOURCE_DIR}/fraud_service.proto
+)
+set(PROTO_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/proto-generated)
+set(PROTO_SRC_PYTHON_DIR ${CMAKE_CURRENT_BINARY_DIR}/protopy-generated)
+
+file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
+file(MAKE_DIRECTORY ${PROTO_SRC_PYTHON_DIR})
+
+
+include_directories(${PROTO_SRC_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${SERVER_INCLUDE})
+include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+
+#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
+grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTOS})
+grpc_generate_python(GRPC_PY ${PROTOS})
+
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
     set(CMAKE_C_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
@@ -85,13 +117,18 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 MESSAGE(STATUS "boost inc: " ${Boost_INCLUDE_DIRS})
+
+
 MESSAGE(STATUS "boost libs: " ${Boost_LIBRARIES})
 add_library(catch_lib ${MAINFOLDER}/test/tests-main.cpp)
+SET(GRPC_LIB "C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/cares.lib;C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/address_sorting.lib;C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/gpr.lib;C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/grpc.lib;C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/grpc++.lib;C:/Users/giorg/vcpkg1/vcpkg/installed/x64-windows/debug/lib/grpc++_unsecure.lib")
 
 if(WIN32)
+# we support just windows 10
+    set (USE_WINSOCK "ws2_32.lib")
     set(Boost_USE_MULTITHREADED ON)
     set(LINK_DEPENDENCIES ${Boost_LIBRARIES} catch_lib)
-    add_definitions(-DBOOST_ALL_DYN_LINK -DBOOST_THREAD_USE_LIB -D_WIN32_WINNT=0x0501)
+    add_definitions(-DBOOST_ALL_DYN_LINK -DBOOST_THREAD_USE_LIB -D_WIN32_WINNT=0x0A00)
 else()
     #add_definitions(-Wall -Wextra -pedantic -Werror)
     add_definitions(-Wall -Wextra -pedantic)
@@ -119,4 +156,21 @@ add_executable(t-03-redisconnection test/03-redisconnection.cpp)
 target_link_libraries(t-03-redisconnection ${LINK_DEPENDENCIES})
 add_test("Should_Connect_RedisCorrectly" t-03-redisconnection)
 
+add_executable(t-04-redisquerygraph test/04-redisquerygraph.cpp)
+target_link_libraries(t-04-redisquerygraph ${LINK_DEPENDENCIES})
+add_test("Should_Query_RedisGraphCorrectly" t-04-redisquerygraph)
 
+set(FDS_SOURCES demo/main.cpp)
+
+add_executable(fds ${GRPC_SRCS} ${FDS_SOURCES})
+message(STATUS "GRPC libs : ${GRPC_LIBRARIES}")
+target_link_libraries(fds PRIVATE 
+                      ${OPENSSL_LIBRARIES}
+                      ${ZLIB_LIBRARIES}
+                      ${CMAKE_DL_LIBS} 
+                      ${Boost_LIBRARIES}
+                      ${c-ares_LIBRARIES}
+                      ${USE_WINSOCK}
+                      ${GRPC_LIB}
+                      ${PROTOBUF_LIBRARIES}
+                      )

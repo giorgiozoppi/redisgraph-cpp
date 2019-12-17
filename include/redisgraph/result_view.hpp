@@ -21,6 +21,8 @@
 #include <optional>
 #include <utility>
 #include <thread>
+#include <random>
+#include <iostream>
 
 namespace redisgraph {
 
@@ -53,9 +55,18 @@ namespace redisgraph {
 		{
 			parse();
 		}
+
 		std::string value() const noexcept
 		{
 			return value_;
+		}
+		void parse_score() {}
+		double score() const noexcept
+		{
+			 std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    		 std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    		 std::uniform_real_distribution<> dis(0.1, 1.0);
+			 return dis(gen);
 		}
 		bool valid() const
 		{
@@ -63,19 +74,11 @@ namespace redisgraph {
 		}
 	private:
 		std::string value_;
-		static const std::string LABELS_ADDED_;
-		static const std::string NODES_CREATED_ = "Nodes created";
-		/*	NODES_DELETED = 'Nodes deleted'
-			RELATIONSHIPS_DELETED = 'Relationships deleted'
-			PROPERTIES_SET = 'Properties set'
-			RELATIONSHIPS_CREATED = 'Relationships created'
-			INTERNAL_EXECUTION_TIME = 'internal execution time'
-			*/
 		bool valid_;
 		void parse()
 		{
-		//	auto extract = boost::apply_visitor(redis::extractor<Iterator>(), view);
-			//	auto& reply = boost::get<redis::extracts::string_t>(extract);
+		//    auto extract = boost::apply_visitor(redis::extractor<Iterator>(), view);
+		//	auto& reply = boost::get<redis::extracts::string_t>(extract);
 			//	value_ = reply.str;
 		}
 

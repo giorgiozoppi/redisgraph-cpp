@@ -23,6 +23,8 @@ namespace redisgraph {
 class connection_context 
 {
 public:
+
+    connection_context() = default;
     /** Constructor
     * @param host           Hostname
     * @param redis_port     Port

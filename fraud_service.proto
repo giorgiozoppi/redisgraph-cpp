@@ -1,0 +1,33 @@
+syntax = "proto3";
+package fraudservice;
+
+message TransactRequest 
+{
+  string transactionId = 1;
+  string ipAddress = 2;
+  int64 merchantId = 3;
+  int64 userId = 4;
+  string userAddress = 5;
+  string shippingAddress = 6;
+  string city = 7;
+  string country = 8;
+  float amount = 9;
+  float latitude = 10;
+  float longitude = 11;
+  string cookie_hash = 12; 
+  bytes timeStamp = 13;
+}
+enum TransactionStatus {
+  TRANSACTION_OK = 0;
+  TRANSACTION_FAILED = 1;
+}
+// The response message containing the greetings
+message TransactReply {
+  int32  message_code= 1;
+  float fraud_score = 2;
+  bool is_blocked = 3;
+  string reason = 4;
+}
+service FraudDetectService {
+  rpc Transact (TransactRequest) returns (TransactReply) {}
+}
