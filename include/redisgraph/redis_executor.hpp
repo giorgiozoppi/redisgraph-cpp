@@ -121,10 +121,9 @@ namespace redisgraph {
 											auto self = this;
 											auto result = r.result;
 											//auto extract = boost::apply_visitor(redis::extractor<Iterator>(), r.result);
-											//auto& replies =
-										//		boost::get<r::markers::array_holder_t<Iterator>>(r.result);
+											auto& replies = boost::get<r::markers::array_holder_t<Iterator>>(r.result);
 											//auto t1 = replies.elements[0];
-										//	auto& reply_str = boost::get<r::extracts::array_holder_t>(extract);
+										    //auto& reply_str = boost::get<r::extracts::array_holder_t>(extract);
 											redisgraph::result_view view;
 											result_promise.set_value(view);
 											self->executor_context_ptr_->rx_buff.consume(r.consumed);
@@ -144,6 +143,9 @@ namespace redisgraph {
 								result_promise.set_value(write_error_view);
 							}
 							}));
+					redisgraph::result_view write_error_view;
+					result_promise.set_value(write_error_view);
+
 			}		
 			/**
 			 *  shutdown the connection pool to redis 
@@ -177,8 +179,8 @@ namespace redisgraph {
 				catch (const std::exception & ex)
 				{
 					started_ = false;
-					auto code = std::error_code(redis_executor::REDIS_CONNECTION_ERROR, std::system_category());
-					throw connection_exception(code, ex.what());
+				//	auto code = std::error_code(redis_executor::REDIS_CONNECTION_ERROR, std::system_category());
+				//	throw connection_exception(code, ex.what());
 				}
 			}
 			redisgraph::connection_context context_;

@@ -18,8 +18,6 @@ TEST_CASE("Should send Graph query to redis", "[graph]")
     auto result = promise.get_future();
     auto result1 = promise1.get_future();
     bredis::single_command_t cmd("GRAPH.QUERY", "social2", "MATCH (n1)-[r]->(n2) RETURN n1, r, n2.name", "--compact");
-   // executor.send_message("COMMAND", std::move(promise1));
-   // result1.get();
     executor.send_command(cmd, std::move(promise));
     auto view = result.get();
     auto result_value = view.value();

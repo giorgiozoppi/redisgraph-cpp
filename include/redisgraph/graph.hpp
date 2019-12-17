@@ -211,7 +211,7 @@ namespace redisgraph {
 
 		void query_async(const std::string& query, std::promise<redisgraph::result_view>&& result_promise)
 		{
-			bredis::single_command_t command("GRAPH.QUERY", this->name_, query, " --compact");
+			bredis::single_command_t command("GRAPH.QUERY", this->name_, query);
 			executor_.send_command(command, std::move(result_promise));
 		}
 	    void delete_graph()

@@ -37,22 +37,23 @@ RunServer (const std::string & address, const std::string& rules, redisgraph::gr
   std::string server_address (address);
   redisgraph::fraud_service fraudService(std::move(api));
   fraudService.start();
+  fraudService.load_rules(rules);
   ServerBuilder builder;
-//  builder.AddListeningPort (server_address,
-//		    grpc::InsecureServerCredentials ());
-//  builder.RegisterService (&fraudService);
- // std::unique_ptr <Server> server (builder.BuildAndStart ());
+  builder.AddListeningPort (server_address,
+		    grpc::InsecureServerCredentials ());
+    builder.RegisterService (&fraudService);
+  std::unique_ptr <Server> server (builder.BuildAndStart ());
   std::cout << "Server listening on " << server_address << std::endl;
- // server->Wait ();
+  server->Wait ();
   fraudService.shutdown();
 }
 
 int main ()
 {
- const int NUMBER_THREADS = 2;
+ const int NUMBER_THREADS = 4;
  const std::string defaultHost("127.0.0.1");
  redisgraph::connection_context ctx{defaultHost,6379, NUMBER_THREADS};
- redisgraph::graph<picojson::value> api("Social", ctx);   
- RunServer ("0.0.0.0:14100", "link_analysis.txt", std::move(api));
+ redisgraph::graph<picojson::value> api("social2", ctx);   
+ RunServer ("0.0.0.0:14100", "C:\\Users\\giorg\\redis_graph\\redisgraph-cpp\\demo\\link_analysis.txt", std::move(api));
  return 0;
 }
